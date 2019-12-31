@@ -1,6 +1,7 @@
 var MAXIMO_IMAGENES = 4;
-var id_drag
-var id_drop
+var id_drag;
+var id_drop;
+var i = 0;
 //$(function(){
 $(document).ready(function() {
   var tituloJuego = 'h1';
@@ -45,6 +46,8 @@ $(document).ready(function() {
             ui.draggable.attr("id",id_drop);
             console.log('Drag: ' + id_drag);
             console.log('Drop: ' + id_drop);
+            i = i + 1;
+            $('#movimientos-text').text(i)
           }
         });
 
@@ -127,7 +130,7 @@ function temporizador() {
   });
 
   //start timer for 2 minutos
-  timer.start(60);
+  timer.start(120);
 }
 
 //Evento para remover tablero (-)
