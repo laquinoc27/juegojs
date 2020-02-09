@@ -8,9 +8,9 @@ $(document).ready(function() {
   amarillo(tituloJuego);
 
   $('button').click(function(){
-    var btnIniciar = $('button').text()
+    var btnIniciar = $('button').text();
     if(btnIniciar == 'Iniciar'){
-      var rutaImagen;
+      //var rutaImagen;
       temporizador();
       $('button').text('Reiniciar');
       cargarCaramelos ('.col-1');
@@ -32,7 +32,7 @@ $(document).ready(function() {
             posYinicial= ui.position.top * -1;
           }
 
-        })
+        });
 
       $(".elemento")
         .droppable({
@@ -42,34 +42,30 @@ $(document).ready(function() {
             $(this).attr("id",id_drag);
             id_drag = ui.draggable.attr("id");
             id_drop = $(this).attr('id');
-            $(this).attr('id',id_drag)
+            $(this).attr('id',id_drag);
             ui.draggable.attr("id",id_drop);
             console.log('Drag: ' + id_drag);
             console.log('Drop: ' + id_drop);
             i = i + 1;
-            $('#movimientos-text').text(i)
+            $('#movimientos-text').text(i);
           }
         });
 
     } else {
       location.reload();
     }
-  })
+  });
 
 
 });
-
-function asignarId(nuevoId){
-
-}
 
 function cargarCaramelos (elemento) {
   for (var c = 1; c < 8; c++) {
      //var j = Math.random() * 4 + 1
      //var x = Math.trunc(j);
      x = azar() + 1;
-     var idImagen = 'c'+elemento.substring(5,6) + '-f' + c.toString() + '-i' + x.toString()
-     rutaImagen = '<img src="image/' + x + '.png" class="elemento" id="' + idImagen + '"/>'
+     var idImagen = 'c'+elemento.substring(5,6) + '-f' + c.toString() + '-i' + x.toString();
+     rutaImagen = '<img src="image/' + x + '.png" class="elemento" id="' + idImagen + '"/>';
      $(elemento).append(rutaImagen);
   }
 }
@@ -84,9 +80,9 @@ function blanco(elemento){
     {
       'color': "white"
     }, 500, function(){
-      amarillo(elemento)
+      amarillo(elemento);
     }
-  )
+  );
 }
 
 function amarillo(elemento){
@@ -94,9 +90,9 @@ function amarillo(elemento){
     {
       'color': "yellow"
     }, 500, function(){
-      blanco(elemento)
+      blanco(elemento);
     }
-  )
+  );
 }
 
 function temporizador() {
@@ -104,10 +100,10 @@ function temporizador() {
       tick : 1,
       ontick : function (sec) {
           //console.log('interval', sec);
-          var seg = Math.trunc(sec/1000)
-          var i
+          var seg = Math.trunc(sec/1000);
+          var i;
           if(seg >= 60) {
-              i = seg - 59
+              i = seg - 59;
               $('#timer').text('1:'+i);
           } else {
             $('#timer').text('0:'+seg);
