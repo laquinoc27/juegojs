@@ -22,6 +22,10 @@
     var score = 0;
     var moves = 0;
 
+    var prevCell = null;
+    var figureLen = 0;
+    var figureStart = null;
+    var figureStop = null;
 
 //$(function(){
 $(document).ready(function() {
@@ -38,8 +42,8 @@ $(document).ready(function() {
       moves= 0 ;
       $("#score-text").html("0");
       $("#movimientos-text").html("0");
-      cargarCaramelos ();
-      reponer();
+      cargarDulces();
+      reponerDulces();
 
     } else {
       location.reload();
@@ -50,7 +54,7 @@ $(document).ready(function() {
 });
 
 //Evento click y drag sobre las imágenes
-  // cuando se hace click sobre un candy
+  // cuando se hace click sobre un dulce
   function _ondragstart(a)
   {
     a.dataTransfer.setData("text/plain", a.target.id);
@@ -73,12 +77,12 @@ $(document).ready(function() {
         e.preventDefault();
       }
 
-     // obtener origen del candy
+     // obtener origen del dulce
      var src = e.dataTransfer.getData("text");
      var sr = src.split("_")[1];
      var sc = src.split("_")[2];
 
-     // obtener destino del candy
+     // obtener destino del dulce
      var dst = e.target.id;
      var dr = dst.split("_")[1];
      var dc = dst.split("_")[2];
@@ -86,6 +90,12 @@ $(document).ready(function() {
      // si la distancia es mayor a 1, no permitir el movimiento y alertar
      var ddx = Math.abs(parseInt(sr)-parseInt(dr));
      var ddy = Math.abs(parseInt(sc)-parseInt(dc));
+     /*
+     if(figureLen<3){
+       alert("No genera combinación válida");
+       return;
+     }
+     */
      if (ddx > 1 || ddy > 1)
      {
        alert("Los movimientos no pueden tener una distancia mayor a 1");
@@ -100,24 +110,24 @@ $(document).ready(function() {
         grid[dr][dc].src = tmp;
         grid[dr][dc].o.attr("src",grid[dr][dc].src);
 
-        // sumar un movimiento a mi cantidad
+        // sumar un movimiento
         moves+=1;
         $("#movimientos-text").html(moves);
 
-        //buscar combinaciones
-        destruirCombos(); 
+        //buscar coincidencias
+        buscarCoincidencias(); 
 
      }
   }
 
 // Evento para cargar los caramelos al tablero de dulces
-function cargarCaramelos () {
+function cargarDulces() {
     // inicio carga de caramelo en tablero
-    function candy(r,c,obj,src) {
+    function dulce(r,c,obj,src) {
       return {
-      r: r, // fila
-      c: c,  // columna
-      src:src, // imagen
+      r: r, 
+      c: c, 
+      src:src, 
       locked:false, 
       isInCombo:false, 
       o:obj 
@@ -128,22 +138,22 @@ function cargarCaramelos () {
     for (var r = 0; r < rows; r++) {
      grid[r]=[];
      for (var c =0; c< cols; c++) {
-        grid[r][c]= new candy(r,c,null,azarDulce());
+        grid[r][c]= new dulce(r,c,null,azarDulce());
      }
     }
 
     // Coordenadas iniciales:
-    var width = $('.panel-tablero').width();
+    //var width = $('.panel-tablero').width();
     var height = $('.panel-tablero').height(); 
-    var cellWidth = width / 7;
+    //var cellWidth = width / 7;
     var cellHeight = height / 7;
-    var marginWidth = cellWidth/7;
-    var marginHeight = cellHeight/7;
+    //var marginWidth = cellWidth/7;
+    //var marginHeight = cellHeight/7;
 
     // creando imagenes en el tablero
     for (var r = 0; r < rows; r++) {
       for (var c =0; c< cols; c++) {
-        var cell = $("<img class='candy' id='candy_"+r+"_"+c+"' r='"+r+"' c='"+c+
+        var cell = $("<img class='dulce' id='dulce_"+r+"_"+c+"' r='"+r+"' c='"+c+
           "'ondrop='_onDrop(event)' ondragover='_onDragOverEnabled(event)'src='"+
           grid[r][c].src+"' style='height:"+cellHeight+"px'/>");
         cell.attr("ondragstart","_ondragstart(event)");
@@ -152,7 +162,7 @@ function cargarCaramelos () {
       }
     }
 
-    //reponer();
+    //reponerDulces();
 
 }
 
@@ -225,7 +235,7 @@ function removerTablero () {
 }
 
 //Evento para reponer dulces
-function reponer() {
+function reponerDulces() {
     // mover celdas vacias hacia arriba
    for (var r=0;r<rows;r++)
    {           
@@ -234,7 +244,7 @@ function reponer() {
       if (grid[r][c].isInCombo)  // celda vacia
       {
         grid[r][c].o.attr("src","");
-          // deshabilitar cerlda del combo               
+          // deshabilitar celda de la combinacion               
         grid[r][c].isInCombo=false;
 
         for (var sr=r;sr>=0;sr--)
@@ -254,7 +264,7 @@ function reponer() {
     { for (var c = 0;c<cols;c++)
       {
         grid[r][c].o.attr("src",grid[r][c].src);
-        grid[r][c].o.css("opacity","1"); // acá podria meter animate
+        grid[r][c].o.css("opacity","1"); // ojo animación
         grid[r][c].isInCombo=false;
         if (grid[r][c].src==null) 
           grid[r][c].respawn=true;
@@ -274,35 +284,32 @@ function reponer() {
         }
       }
     }
-
-
-
-    console.log("celdas repuestas");
-
-    // revisar si hay combos pendientes despues de reordenar
-    destruirCombos();
+    console.log("dulces repuestos");
+    // revisar si hay combinaciones pendientes despues de reordenar
+    buscarCoincidencias();
 } 
 
-// Buscar coincidencias horizontales y verticales para destruirlas
-function destruirCombos()
+// Buscar coincidencias horizontales y verticales para eliminarlas
+function buscarCoincidencias()
 {    
-
  // busqueda horizontal
-
-
   for (var r = 0; r < rows; r++)
-  {           
-
-
+  {
+    /*
     var prevCell = null;
     var figureLen = 0;
     var figureStart = null;
     var figureStop = null;
-
+    */
+    prevCell = null;
+    figureLen = 0;
+    figureStart = null;
+    figureStop = null;
+   
     for (var c=0; c< cols; c++)
     {
 
-      // saltear candys locked o que estan en combo.    
+      // saltear dulces que estan en combinacion.    
       if (grid[r][c].locked || grid[r][c].isInCombo)
       {
         figureStart = null;
@@ -312,7 +319,7 @@ function destruirCombos()
         continue;
       }
 
-      // primer objeto del combo
+      // primer objeto de la combinacion
       if (prevCell==null) 
       {
         prevCell = grid[r][c].src;
@@ -323,7 +330,7 @@ function destruirCombos()
       }
       else
       {
-        // segundo o posterior objeto del combo
+        // segundo o posterior objeto de la combinacion
         var curCell = grid[r][c].src;
         if (!(prevCell==curCell))
         {
@@ -335,18 +342,17 @@ function destruirCombos()
         }
         else
         {
-          // incrementar combo
+          // incrementar combinacion
           figureLen+=1;
           if (figureLen==3)
           {
             validFigures+=1;
-            score+=10;
+            score+=1;
             $("#score-text").html(score);
             figureStop = c;
             console.log("Combo de columna " + figureStart + " a columna " + figureStop);
             for (var ci=figureStart;ci<=figureStop;ci++)
             {
-
               grid[r][ci].isInCombo=true;
               grid[r][ci].src=null;                     
             }
@@ -365,12 +371,18 @@ function destruirCombos()
  // busqueda vertical
 
   for (var c=0; c< cols; c++)
-  {              
+  { 
+      /*
     var prevCell = null;
     var figureLen = 0;
     var figureStart = null;
     var figureStop = null;
-
+    */
+   prevCell = null;
+   figureLen = 0;
+   figureStart = null;
+   figureStop = null;
+   
     for (var r = 0; r < rows; r++)
     {
 
@@ -408,7 +420,7 @@ function destruirCombos()
           if (figureLen==3)
           {
             validFigures+=1;
-            score+=10;
+            score+=1;
             $("#score-text").html(score);
             figureStop = r;
             console.log("Combo de fila " + figureStart + " a fila " + figureStop );
@@ -430,30 +442,27 @@ function destruirCombos()
     }
   }
 
-
-  // destruir combos
+  // destruir combinaciones
 
    var isCombo=false;
    for (var r = 0;r<rows;r++)
     for (var c=0;c<cols;c++)
       if (grid[r][c].isInCombo)
       { 
-        console.log("Combo disponible");
+        console.log("Combinación disponible");
         isCombo=true; 
-        // ACÁ FALTA LA ANIMACIÓN NADA MÁS, Y ESTARIA BIEN
-         reponer() // aca funciona bien 
+        // ANIMACIÓN PARA DESAPARECER
+        reponerDulces()
       }
 
   if (isCombo)  // Acá no entra nunca, el metodo lo termina llamando al final del reponer
     desaparecerCombos();
   else 
-  console.log("No más combos automáticos");
-
-
+    console.log("No más combinaciones automáticas");
 
 }
     
-//desaparecer candys borrados
+//desaparecer dulces borrados
 function desaparecerCombos()
 {
    for (var r=0;r<rows;r++)  { 
@@ -466,10 +475,4 @@ function desaparecerCombos()
       } 
     }   
   } 
-
-  // ACÁ ES DONDE DEBERIA IR EL REPONER() PERO NO ES LLAMADO NUNCA
-//   $("[style*='opacity: 0']").promise().done(function() {
-//       reponer();
-//  });     
-
 }
