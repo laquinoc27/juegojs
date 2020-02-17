@@ -429,14 +429,14 @@ function buscarCoincidencias()
     }
   }
 
-  // destruir combinaciones
+  // eliminar combinaciones
 
    var isCombo=false;
    for (var r = 0;r<rows;r++)
     for (var c=0;c<cols;c++)
       if (grid[r][c].isInCombo)
       { 
-        console.log("Combinación disponible");
+        console.log("Combinación existente");
         isCombo=true; 
         // ANIMACIÓN PARA DESAPARECER
         reponerDulces()
@@ -445,7 +445,7 @@ function buscarCoincidencias()
   if (isCombo)  // Acá no entra nunca, el metodo lo termina llamando al final del reponer
     desaparecerCombos();
   else 
-    console.log("No más combinaciones automáticas");
+    console.log("No existen más combinaciones automáticas");
 
 }
     
