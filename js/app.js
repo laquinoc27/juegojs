@@ -295,12 +295,6 @@ function buscarCoincidencias()
  // busqueda horizontal
   for (var r = 0; r < rows; r++)
   {
-    /*
-    var prevCell = null;
-    var figureLen = 0;
-    var figureStart = null;
-    var figureStop = null;
-    */
     prevCell = null;
     figureLen = 0;
     figureStart = null;
@@ -372,17 +366,10 @@ function buscarCoincidencias()
 
   for (var c=0; c< cols; c++)
   { 
-      /*
-    var prevCell = null;
-    var figureLen = 0;
-    var figureStart = null;
-    var figureStop = null;
-    */
    prevCell = null;
    figureLen = 0;
    figureStart = null;
    figureStop = null;
-   
     for (var r = 0; r < rows; r++)
     {
 
