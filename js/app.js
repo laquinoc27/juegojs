@@ -1,7 +1,8 @@
 /* 
  * Autor: Luis Enrique Aquino Castillo.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Fecha: 18/02/2020
+ * Curso: Desarrollo web
+ * Módulo: Frameworks y librerías Java Script
  */
 
 // Declaración de variables
@@ -9,6 +10,8 @@
     var id_drag;
     var id_drop;
     var i = 0;
+    var tiempoJuego = 0;
+    var gt_t = 120;
     // arreglo con imagenes para cada tipo de dulce
     var tipoDulce=[];
         tipoDulce[0]="image/1.png";
@@ -27,16 +30,17 @@
     var figureStart = null;
     var figureStop = null;
 
-//$(function(){
 $(document).ready(function() {
   var tituloJuego = 'h1';
-  amarillo(tituloJuego);
+  
 
   $('button').click(function(){
     var btnIniciar = $('button').text();
     if(btnIniciar == 'Iniciar'){
       //var rutaImagen;
-      temporizador();
+      temporizador(gt_t);
+      //cambiar color de titulo de juego
+      amarillo(tituloJuego);
       $('button').text('Reiniciar');
       score= 0 ;
       moves= 0 ;
@@ -60,20 +64,18 @@ $(document).ready(function() {
     a.dataTransfer.setData("text/plain", a.target.id);
   }
 
-   // cuando se mueve una dulce por encima de otra sin soltarla 
+  // cuando se mueve una dulce por encima de otra sin soltarla 
   function _onDragOverEnabled(e)
   {
     e.preventDefault();
-    console.log("pasando sobre caramelo " + e.target.id);
   }
 
-    // cuando soltas una dulce sobre otra
+  // cuando se suelta una dulce sobre otro
   function _onDrop(e)
   {
-    // solo para firefox
+    // compatibilidad para firefox
     var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
       if (isFirefox) {
-        console.log("firefox compatibility");
         e.preventDefault();
       }
 
@@ -90,25 +92,40 @@ $(document).ready(function() {
      // si la distancia es mayor a 1, no permitir el movimiento y alertar
      var ddx = Math.abs(parseInt(sr)-parseInt(dr));
      var ddy = Math.abs(parseInt(sc)-parseInt(dc));
-     /*
-     if(figureLen<3){
-       alert("No genera combinación válida");
-       return;
-     }
-     */
+     
+   
      if (ddx > 1 || ddy > 1)
      {
-       alert("Los movimientos no pueden tener una distancia mayor a 1");
+       alert("El cambio solo puede ser con el dulce adyacente");
        return;
      }
+     else if (ddx == 1 && ddy == 1)
+     {
+      alert("Los cambios no pueden ser en diagonal");
+      return;
+     }
      else{
-        console.log("intercambio " + sr + "," + sc+ " to " + dr + "," + dc);
         // intercambio de dulces
-        var tmp = grid[sr][sc].src;
+        var tmp_o = grid[sr][sc].src;
+        var tmp_d = grid[dr][dc].src;
         grid[sr][sc].src = grid[dr][dc].src;
         grid[sr][sc].o.attr("src",grid[sr][sc].src);
-        grid[dr][dc].src = tmp;
+        grid[dr][dc].src = tmp_o;
         grid[dr][dc].o.attr("src",grid[dr][dc].src);
+
+        //validar intercambio
+        var resBus = validarCoincidencias();
+        console.log("Busqueda: " + resBus);
+                  
+        if(resBus==0)
+        {
+         alert("No genera combinación");
+         grid[sr][sc].src = tmp_o;
+         grid[sr][sc].o.attr("src",grid[sr][sc].src);
+         grid[dr][dc].src = tmp_d;
+         grid[dr][dc].o.attr("src",grid[dr][dc].src);
+         return;
+        }
 
         // sumar un movimiento
         moves+=1;
@@ -116,7 +133,6 @@ $(document).ready(function() {
 
         //buscar coincidencias
         buscarCoincidencias(); 
-
      }
   }
 
@@ -137,18 +153,14 @@ function cargarDulces() {
     // preparando el tablero
     for (var r = 0; r < rows; r++) {
      grid[r]=[];
-     for (var c =0; c< cols; c++) {
+     for (var c =0; c < cols; c++) {
         grid[r][c]= new dulce(r,c,null,azarDulce());
      }
     }
 
     // Coordenadas iniciales:
-    //var width = $('.panel-tablero').width();
     var height = $('.panel-tablero').height(); 
-    //var cellWidth = width / 7;
     var cellHeight = height / 7;
-    //var marginWidth = cellWidth/7;
-    //var marginHeight = cellHeight/7;
 
     // creando imagenes en el tablero
     for (var r = 0; r < rows; r++) {
@@ -161,38 +173,46 @@ function cargarDulces() {
         grid[r][c].o = cell;
       }
     }
-
-    //reponerDulces();
-
 }
 
 // funciones generales para el juego
+// seleccionar al azar tipo de dulce
 function azarDulce(){
   var NroDulce = Math.floor(Math.random()*MAXIMO_IMAGENES);
   return tipoDulce[NroDulce];
 }
 
+//cambiar color del texto Match Game a blanco
 function blanco(elemento){
-  $(elemento).animate(
+  if (tiempoJuego > 0) 
+  {
+    $(elemento).animate(
     {
       'color': "white"
-    }, 500, function(){
-      amarillo(elemento);
-    }
-  );
+    }, 500, function()
+        {
+            amarillo(elemento);
+        }
+    );
+  }
 }
-
+//cambiar color del texto Match Game a amarillo
 function amarillo(elemento){
-  $(elemento).animate(
-    {
-      'color': "yellow"
-    }, 500, function(){
-      blanco(elemento);
-    }
-  );
+  if (tiempoJuego > 0) 
+  {
+    $(elemento).animate(
+        {
+          'color': "yellow"
+        }, 500, function()
+            {
+              blanco(elemento);
+            }
+    );
+  }
 }
 
-function temporizador() {
+function temporizador(lt_t) {
+  // Inicializando timer
   var timer = new Timer({
       tick : 1,
       ontick : function (sec) {
@@ -208,43 +228,48 @@ function temporizador() {
 
       },
       onstart : function() {
-          console.log('timer started');
+          console.log('iniciando timer');
+          tiempoJuego=lt_t;
       }
   });
 
-  // defining options using on
+  // Acciones al terminar tiempo
   timer.on('end', function () {
-      //console.log('timer ended');
-      //this.start(4).off('end');
-      //alert('Finalizó el juego');
       $('#timer').text('02:00');
       //$('#timer').text('00:10');
       $('button').text('Reiniciar');
       $('.panel-score').css("width","100%");
+      tiempoJuego=0
       removerTablero ();
   });
 
-  //start timer for 2 minutos
-  timer.start(120);
-  //timer.start(10);
+  //Valor de tiempo
+  timer.start(lt_t);
 }
 
-//Evento para remover tablero (-)
+//Evento para remover tablero
 function removerTablero () {
   $(".panel-tablero").remove();
 }
 
 //Evento para reponer dulces
 function reponerDulces() {
-    // mover celdas vacias hacia arriba
+    // mover celdas vacias
    for (var r=0;r<rows;r++)
    {           
     for (var c=0;c<cols;c++)
     {  
       if (grid[r][c].isInCombo)  // celda vacia
       {
+        //Setear tipo dulce
+        var dulce = "#dulce_"+r+'_'+c;
+        $(dulce).fadeOut(500,function()
+        {
+            console.log('Animacion ocultar');
+            //grid[r][c].o.attr("src","");
+        });
         grid[r][c].o.attr("src","");
-          // deshabilitar celda de la combinacion               
+        // deshabilitar celda de la combinacion               
         grid[r][c].isInCombo=false;
 
         for (var sr=r;sr>=0;sr--)
@@ -263,6 +288,8 @@ function reponerDulces() {
     for (var r=0;r<rows;r++)
     { for (var c = 0;c<cols;c++)
       {
+        var dulce = "#dulce_"+r+'_'+c;
+        $(dulce).fadeIn(500,function(){console.log('Animacion mostrar')});
         grid[r][c].o.attr("src",grid[r][c].src);
         grid[r][c].o.css("opacity","1"); // ojo animación
         grid[r][c].isInCombo=false;
@@ -291,8 +318,8 @@ function reponerDulces() {
 
 // Buscar coincidencias horizontales y verticales para eliminarlas
 function buscarCoincidencias()
-{    
- // busqueda horizontal
+{
+ // busqueda de coincidencias horizontales
   for (var r = 0; r < rows; r++)
   {
     prevCell = null;
@@ -302,7 +329,6 @@ function buscarCoincidencias()
    
     for (var c=0; c< cols; c++)
     {
-
       // saltear dulces que estan en combinacion.    
       if (grid[r][c].locked || grid[r][c].isInCombo)
       {
@@ -312,7 +338,6 @@ function buscarCoincidencias()
         figureLen = 1;
         continue;
       }
-
       // primer objeto de la combinacion
       if (prevCell==null) 
       {
@@ -341,29 +366,34 @@ function buscarCoincidencias()
           if (figureLen==3)
           {
             validFigures+=1;
-            score+=1;
+            score+=figureLen;
             $("#score-text").html(score);
             figureStop = c;
-            console.log("Combo de columna " + figureStart + " a columna " + figureStop);
+            console.log("COMBINACIÓN de fila " + r + ", desde columna: " + figureStart + " a " + figureStop);
             for (var ci=figureStart;ci<=figureStop;ci++)
             {
-              grid[r][ci].isInCombo=true;
-              grid[r][ci].src=null;                     
+               grid[r][ci].isInCombo=true;
+               grid[r][ci].src=null;
+               /*
+               var dulce = "#dulce_"+r+'_'+ci;
+               $(dulce).fadeOut(1000,function()
+               {
+                 console.log('Animacion ocultar');
+               });*/
             }
             prevCell=null;
             figureStart = null;
             figureStop = null;
             figureLen = 1;
-            continue;
+            continue; //saltar a la siguiente iteración
           }
         }
       }
-
     }
   }
-
- // busqueda vertical
-
+  
+ //Búsqueda de coincidencias verticales
+ 
   for (var c=0; c< cols; c++)
   { 
    prevCell = null;
@@ -407,15 +437,21 @@ function buscarCoincidencias()
           if (figureLen==3)
           {
             validFigures+=1;
-            score+=1;
+            score+=figureLen;
             $("#score-text").html(score);
             figureStop = r;
-            console.log("Combo de fila " + figureStart + " a fila " + figureStop );
+            console.log("COMBINACIÓN de columna " + c + ", desde fila: " + figureStart + " a " + figureStop );
+            
             for (var ci=figureStart;ci<=figureStop;ci++)
             {
-
               grid[ci][c].isInCombo=true;
-              grid[ci][c].src=null;         
+              grid[ci][c].src=null;
+              /*
+              var dulce = "#dulce_"+ci+'_'+c;
+              $(dulce).fadeOut(1000,function()
+              {
+                  console.log('Animacion ocultar');
+              }); */
             }
             prevCell=null;
             figureStart = null;
@@ -429,37 +465,136 @@ function buscarCoincidencias()
     }
   }
 
-  // eliminar combinaciones
-
-   var isCombo=false;
-   for (var r = 0;r<rows;r++)
+  // Eliminar combinaciones
+   for (var r=0;r<rows;r++)
     for (var c=0;c<cols;c++)
       if (grid[r][c].isInCombo)
       { 
-        console.log("Combinación existente");
-        isCombo=true; 
-        // ANIMACIÓN PARA DESAPARECER
+        console.log("Combinación existente " + c + "-" + r);
         reponerDulces()
       }
 
-  if (isCombo)  // Acá no entra nunca, el metodo lo termina llamando al final del reponer
-    desaparecerCombos();
-  else 
-    console.log("No existen más combinaciones automáticas");
+   console.log("No existen más combinaciones automáticas");
 
 }
-    
-//desaparecer dulces borrados
-function desaparecerCombos()
+
+function validarCoincidencias()
 {
-   for (var r=0;r<rows;r++)  { 
-    for (var c=0;c<cols;c++){
-      if (grid[r][c].isInCombo)  // celda vacia
+  var resulBusqueH = 0;
+  var resulBusqueV = 0;
+  var resultBusque = 0;
+ // busqueda horizontal
+  for (var r = 0; r < rows; r++)
+  {
+    prevCell = null;
+    figureLen = 0;
+    figureStart = null;
+    figureStop = null;
+   
+    for (var c=0; c< cols; c++)
+    {
+      // saltear dulces que estan en combinacion.    
+      if (grid[r][c].locked || grid[r][c].isInCombo)
       {
-        grid[r][c].o.animate({
-          opacity:0
-        },slow);
-      } 
-    }   
-  } 
+        figureStart = null;
+        figureStop = null;
+        prevCell = null;  
+        figureLen = 1;
+        continue;
+      }
+      // primer objeto de la combinacion
+      if (prevCell==null) 
+      {
+        prevCell = grid[r][c].src;
+        figureStart = c;
+        figureLen = 1;
+        figureStop = null;
+        continue;
+      }
+      else
+      {
+        // segundo o posterior objeto de la combinacion
+        var curCell = grid[r][c].src;
+        if (!(prevCell==curCell))
+        {
+          prevCell = grid[r][c].src;
+          figureStart = c;
+          figureStop=null;
+          figureLen = 1;
+          continue;
+        }
+        else
+        {
+          // incrementar combinacion
+          figureLen+=1;
+          if (figureLen==3)
+          {
+            resulBusqueH = 1;
+            continue; //saltar a la siguiente iteración
+          }
+        }
+      }
+    }
+  }
+  
+  // busqueda vertical
+  for (var c=0; c< cols; c++)
+  { 
+   prevCell = null;
+   figureLen = 0;
+   figureStart = null;
+   figureStop = null;
+    for (var r = 0; r < rows; r++)
+    {
+
+      if (grid[r][c].locked || grid[r][c].isInCombo)
+      {
+        figureStart = null;
+        figureStop = null;
+        prevCell = null;  
+        figureLen = 1;
+        continue;
+      }
+
+      if (prevCell==null) 
+      {
+        prevCell = grid[r][c].src;
+        figureStart = r;
+        figureLen = 1;
+        figureStop = null;
+        continue;
+      }
+      else
+      {
+        var curCell = grid[r][c].src;
+        if (!(prevCell==curCell))
+        {
+          prevCell = grid[r][c].src;
+          figureStart = r;
+          figureStop=null;
+          figureLen = 1;
+          continue;
+        }
+        else
+        {
+          figureLen+=1;
+          if (figureLen==3)
+          {
+            resulBusqueV = 1;
+            continue;
+          }
+        }
+      }
+
+    }
+  }
+  if (resulBusqueH == 1 || resulBusqueV == 1)
+  {
+      resultBusque = 1;
+  }
+  return resultBusque;
 }
+
+    
+
+
